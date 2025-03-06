@@ -23,38 +23,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
         die("❌ Fehler: Nur .TXT-Dateien sind erlaubt.");
     }
 
-    // Datei in Zielverzeichnis speichern (Original, zur Sicherheit)
-    $uploaded_file = $target_directory . "original_" . basename($file_name);
-    if (!move_uploaded_file($file_tmp, $uploaded_file)) {
-        die("❌ Fehler: Die Datei konnte nicht gespeichert werden.");
-    }
+    // Datei einlesen & Formatierung korrigieren (Erzwingen von Zeilenumbrüchen)
+    $file_content = file_get_contents($file_tmp);
+    $file_content = str_replace("\r", "\n", $file_content);  // Korrigiert Windows/Mac-Zeilenumbrüche
+    $lines = preg_split("/\n+/", trim($file_content));  // Korrekte Zeilenaufteilung
 
-    // Debugging: Datei erfolgreich gespeichert
-    echo "✅ Datei erfolgreich gespeichert als: $uploaded_file<br>";
-
-    // Datei einlesen, filtern und speichern
+    // Gefilterte Daten vorbereiten
     $filtered_lines = [];
-    $handle = fopen($uploaded_file, "r");
 
-    if ($handle) {
-        while (($line = fgets($handle)) !== false) {
-            $columns = explode("\t", trim($line)); // Tabulator als Trennzeichen
-            if (count($columns) > 3 && in_array(strtolower(trim($columns[3])), ["ausgefallen", "vertritt"])) {
-                $filtered_lines[] = $line;
-            }
+    foreach ($lines as $line) {
+        $columns = explode("\t", trim($line)); // Tab als Trennzeichen
+
+        // Prüfen, ob mindestens 4 Spalten existieren
+        if (count($columns) < 4) {
+            continue;
         }
-        fclose($handle);
-    } else {
-        die("❌ Fehler: Datei konnte nicht geöffnet werden.");
+
+        // Die vierte Spalte auf "ausgefallen***" oder "vertritt***" prüfen
+        if (preg_match("/^(ausgefallen|vertritt).*/i", trim($columns[3]))) {
+            $filtered_lines[] = implode("\t", $columns);
+        }
     }
 
-    // Gefilterte Daten speichern
-    if (file_put_contents($target_file, implode("", $filtered_lines))) {
-        echo "✅ Gefilterte Datei gespeichert unter: <strong>$target_file</strong><br>";
-        echo "<a href='/planfix/vertretung.txt' download>📥 Gefilterte Datei herunterladen</a>";
-    } else {
-        die("❌ Fehler: Gefilterte Datei konnte nicht gespeichert werden.");
+    // Falls keine Zeilen gefiltert wurden
+    if (empty($filtered_lines)) {
+        die("⚠ Keine passenden Einträge gefunden. Datei enthält keine relevanten Daten.");
     }
+
+    // Gefilterte Daten in `vertretung.txt` speichern
+    file_put_contents($target_file, implode("\n", $filtered_lines));
+
+    echo "✅ Datei erfolgreich verarbeitet und gespeichert unter: <strong>$target_file</strong><br>";
+    echo "<a href='/planfix/vertretung.txt' download>📥 Gefilterte Datei herunterladen</a>";
 } else {
     echo "⚠ Bitte eine Datei hochladen.";
 }

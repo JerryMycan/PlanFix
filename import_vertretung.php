@@ -1,9 +1,13 @@
 <?php
+
+ini_set('memory_limit', '512M');
+ini_set('max_execution_time', 300);
+
 // Verbindung zur MySQL-Datenbank herstellen
 $servername = "localhost";
 $username = "root"; // Anpassen je nach Umgebung
 $password = "Kym7HEbeS6#"; // Anpassen je nach Umgebung
-$dbname = "c1_planfix";
+$dbname = "c1_planfix";  
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -37,15 +41,8 @@ foreach ($lines as $line) {
     // Prüfe auf verschiedene Trennzeichen (Tab, Komma, Semikolon)
     if (strpos($line, "\t") !== false) {
         $columns = explode("\t", trim($line));
-        echo "🔹 Getrennt mit TAB ✅<br>";
-    } elseif (strpos($line, ";") !== false) {
-        $columns = explode(";", trim($line));
-        echo "🔸 Getrennt mit SEMIKOLON ❌<br>";
-    } elseif (strpos($line, ",") !== false) {
-        $columns = explode(",", trim($line));
-        echo "🔸 Getrennt mit KOMMA ❌<br>";
     } else {
-        echo "❌ **Kein bekanntes Trennzeichen erkannt!**<br>";
+        echo "❌ Kein bekanntes Trennzeichen gefunden!<br>";
         continue;
     }
 
@@ -64,7 +61,7 @@ foreach ($lines as $line) {
     $lehrer = trim($columns[0]);
     $datum_raw = trim($columns[1]);
     $datum = date("Y-m-d", strtotime($datum_raw)); // Datum ins SQL-Format umwandeln
-    $stunde = intval(trim($columns[2]));
+    $stunde = trim($columns[2]); // Jetzt als String (nicht mehr INT)
     $status = strtolower(trim($columns[3]));
 
     // **Prüfen, ob der Status gültig ist**
@@ -76,7 +73,7 @@ foreach ($lines as $line) {
 
     // **Daten in die DB einfügen**
     $stmt = $conn->prepare("INSERT INTO vertretungen (datum, stunde, status, lehrer) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("siss", $datum, $stunde, $status, $lehrer);
+    $stmt->bind_param("ssss", $datum, $stunde, $status, $lehrer);
 
     if ($stmt->execute()) {
         echo "✅ Importiert: $datum | Stunde: $stunde | Status: $status | Lehrer: $lehrer <br>";
@@ -95,4 +92,3 @@ echo "<br><a href='upload_and_filter.php'>⬅ Zurück zum Upload</a>";
 // Verbindung schließen
 $conn->close();
 ?>
-
