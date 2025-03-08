@@ -1,94 +1,105 @@
 <?php
+// **Fehlermeldungen aktivieren**
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-ini_set('memory_limit', '512M');
-ini_set('max_execution_time', 300);
-
-// Verbindung zur MySQL-Datenbank herstellen
+// **Verbindung zur MySQL-Datenbank herstellen**
 $servername = "localhost";
-$username = "root"; // Anpassen je nach Umgebung
-$password = "Kym7HEbeS6#"; // Anpassen je nach Umgebung
-$dbname = "c1_planfix";  
+$username = "root"; 
+$password = "Kym7HEbeS6#"; 
+$dbname = "c1_planfix"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
+$conn->query("USE c1_planfix;"); // Sicherstellen, dass die richtige DB genutzt wird
 
-// Verbindung prüfen
+// **Verbindung prüfen**
 if ($conn->connect_error) {
     die("❌ Verbindung fehlgeschlagen: " . $conn->connect_error);
+} else {
+    echo "✅ Verbindung zur Datenbank erfolgreich hergestellt.<br>";
 }
 
-// **Pfad zur gefilterten Datei**
-$file_path = "/var/www/html/planfix/vertretung.txt";
+// **Pfad zur CSV-Datei**
+$file_path = "/var/www/html/planfix/vertretung.csv";
 
-// Prüfen, ob die Datei existiert
+// **Prüfen, ob die Datei existiert**
 if (!file_exists($file_path)) {
-    die("❌ Fehler: Datei 'vertretung.txt' nicht gefunden.");
+    die("❌ Fehler: Datei 'vertretung.csv' wurde nicht gefunden.");
 }
 
-// **Datei mit Korrektur der Zeilenumbrüche einlesen**
-$file_content = file_get_contents($file_path);
-$file_content = str_replace("\r", "\n", $file_content);  // Falls Windows/Mac-Zeilenumbrüche existieren
-$lines = preg_split("/\n+/", trim($file_content)); // Spaltet Zeilen anhand von neuen Zeilen
+// **Datei öffnen**
+$handle = fopen($file_path, "r");
+if (!$handle) {
+    die("❌ Fehler: Datei konnte nicht geöffnet werden.");
+}
 
-// Debug: Anzahl der erkannten Zeilen anzeigen
-echo "<h2>🔍 Datei enthält " . count($lines) . " Zeilen.</h2>";
+// **Kopfzeile auslesen (und überspringen)**
+$header = fgetcsv($handle, 1000, ";");
+echo "📌 CSV-Spalten erkannt: " . implode(", ", $header) . "<br>";
 
 $imported_rows = 0;
 $skipped_rows = 0;
 
-foreach ($lines as $line) {
-    echo "📌 Bearbeite Zeile: " . htmlspecialchars($line) . "<br>";
-
-    // Prüfe auf verschiedene Trennzeichen (Tab, Komma, Semikolon)
-    if (strpos($line, "\t") !== false) {
-        $columns = explode("\t", trim($line));
-    } else {
-        echo "❌ Kein bekanntes Trennzeichen gefunden!<br>";
-        continue;
-    }
-
-    // Debug: Zeige die erkannten Spalten
-    print_r($columns);
+// **Daten aus der Datei einlesen und speichern**
+while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+    echo "🔹 Zeile gelesen: ";
+    print_r($data);
     echo "<br>";
 
-    // Prüfen, ob die Zeile die richtige Anzahl an Spalten hat
-    if (count($columns) < 4) {
-        echo "⚠ Fehlerhafte Zeile übersprungen (zu wenig Spalten)<br>";
+    // **Falls weniger als 9 Spalten, Zeile überspringen**
+    if (count($data) < 9) {
+        echo "⚠ Zeile übersprungen (zu wenig Spalten): " . implode(" | ", $data) . "<br>";
         $skipped_rows++;
         continue;
     }
 
-    // Werte zuweisen
-    $lehrer = trim($columns[0]);
-    $datum_raw = trim($columns[1]);
-    $datum = date("Y-m-d", strtotime($datum_raw)); // Datum ins SQL-Format umwandeln
-    $stunde = trim($columns[2]); // Jetzt als String (nicht mehr INT)
-    $status = strtolower(trim($columns[3]));
+    // **Lehrer-Kürzel auslesen & unsichtbare Zeichen entfernen**
+    $lehrer_kuerzel = trim(preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', $data[0]));
 
-    // **Prüfen, ob der Status gültig ist**
-    if (!in_array($status, ['ausgefallen', 'vertritt'])) {
-        echo "⚠ Ungültiger Status: '$status' in Zeile übersprungen<br>";
-        $skipped_rows++;
-        continue;
+    // **Falls Lehrer-Kürzel leer ist, Standardwert setzen**
+    if (empty($lehrer_kuerzel)) {
+        $lehrer_kuerzel = "UNBEKANNT";
     }
 
-    // **Daten in die DB einfügen**
-    $stmt = $conn->prepare("INSERT INTO vertretungen (datum, stunde, status, lehrer) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $datum, $stunde, $status, $lehrer);
+    // **Weitere Werte zuweisen**
+    $datum = date("Y-m-d", strtotime(trim($data[1])));
+    $stunde = trim($data[2]);
+    $status = strtolower(trim($data[3]));
+    $diff = is_numeric($data[4]) ? floatval($data[4]) : NULL;
+    $vertritt_in = trim($data[5]) ?: NULL;
+    $zusatzinfo_1 = trim($data[6]) ?: NULL;
+    $zusatzinfo_2 = trim($data[7]) ?: NULL;
+    $zusatzinfo_3 = trim($data[8]) ?: NULL;
 
+    echo "📊 Werte für INSERT: Lehrer: $lehrer_kuerzel, Datum: $datum, Stunde: $stunde, Status: $status, Diff: $diff, Vertritt: $vertritt_in, Zusatzinfo1: $zusatzinfo_1, Zusatzinfo2: $zusatzinfo_2, Zusatzinfo3: $zusatzinfo_3 <br>";
+
+    // **SQL-Befehl vorbereiten**
+    $stmt = $conn->prepare("
+        INSERT INTO `vertretungen` 
+        (`lehrer_kuerzel`, `datum`, `stunde`, `status`, `diff`, `vertritt_in`, `zusatzinfo_1`, `zusatzinfo_2`, `zusatzinfo_3`) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->bind_param("ssssdsiss", $lehrer_kuerzel, $datum, $stunde, $status, $diff, $vertritt_in, $zusatzinfo_1, $zusatzinfo_2, $zusatzinfo_3);
+
+    // **SQL-Statement ausführen und prüfen**
     if ($stmt->execute()) {
-        echo "✅ Importiert: $datum | Stunde: $stunde | Status: $status | Lehrer: $lehrer <br>";
+        echo "✅ Zeile erfolgreich gespeichert.<br>";
         $imported_rows++;
     } else {
         echo "❌ SQL-Fehler: " . $stmt->error . "<br>";
     }
 }
 
+// **Datei schließen**
+fclose($handle);
+
 // **Ergebnis anzeigen**
 echo "<h2>Import abgeschlossen</h2>";
 echo "✅ $imported_rows Zeilen erfolgreich importiert.<br>";
-echo "⚠ $skipped_rows Zeilen übersprungen (fehlende Daten oder ungültiger Status).<br>";
+echo "⚠ $skipped_rows Zeilen übersprungen (fehlerhafte Einträge).<br>";
 echo "<br><a href='upload_and_filter.php'>⬅ Zurück zum Upload</a>";
 
-// Verbindung schließen
+// **Datenbankverbindung schließen**
 $conn->close();
 ?>
