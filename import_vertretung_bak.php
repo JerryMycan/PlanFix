@@ -11,7 +11,7 @@ $password = "Kym7HEbeS6#";
 $dbname = "c1_planfix"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
-$conn->query("USE c1_planfix;");
+$conn->query("USE c1_planfix;"); // Sicherstellen, dass die richtige DB genutzt wird
 
 // **Verbindung prüfen**
 if ($conn->connect_error) {
@@ -74,23 +74,6 @@ while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
 
     echo "📊 Werte für INSERT: Lehrer: $lehrer_kuerzel, Datum: $datum, Stunde: $stunde, Status: $status, Diff: $diff, Vertritt: $vertritt_in, Zusatzinfo1: $zusatzinfo_1, Zusatzinfo2: $zusatzinfo_2, Zusatzinfo3: $zusatzinfo_3 <br>";
 
-    // **Prüfen, ob der Datensatz bereits existiert**
-    $check_stmt = $conn->prepare("
-        SELECT COUNT(*) FROM vertretungen 
-        WHERE lehrer_kuerzel = ? AND datum = ? AND stunde = ? AND status = ?
-    ");
-    $check_stmt->bind_param("ssss", $lehrer_kuerzel, $datum, $stunde, $status);
-    $check_stmt->execute();
-    $check_stmt->bind_result($count);
-    $check_stmt->fetch();
-    $check_stmt->close();
-
-    if ($count > 0) {
-        echo "⚠ Datensatz existiert bereits, wird übersprungen.<br>";
-        $skipped_rows++;
-        continue;
-    }
-
     // **SQL-Befehl vorbereiten**
     $stmt = $conn->prepare("
         INSERT INTO `vertretungen` 
@@ -114,7 +97,7 @@ fclose($handle);
 // **Ergebnis anzeigen**
 echo "<h2>Import abgeschlossen</h2>";
 echo "✅ $imported_rows Zeilen erfolgreich importiert.<br>";
-echo "⚠ $skipped_rows Zeilen übersprungen (Doppelungen oder fehlerhafte Einträge).<br>";
+echo "⚠ $skipped_rows Zeilen übersprungen (fehlerhafte Einträge).<br>";
 echo "<br><a href='upload_and_filter.php'>⬅ Zurück zum Upload</a>";
 
 // **Datenbankverbindung schließen**
