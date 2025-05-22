@@ -12,8 +12,8 @@ $lehrkraefte = $stmt->fetchAll();
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Lehrkräfte bearbeiten</title>
-    <link rel="stylesheet" href="../css/lehrkraefte.css">
+    <title>Lehrkräfte bearbeiten - Test</title>
+    <!--<link rel="stylesheet" href="../css/lehrkraefte.css">-->
 
     <style>
         table {
