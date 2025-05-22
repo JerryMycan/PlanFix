@@ -1,0 +1,68 @@
+/* Gesamtstruktur der Tabelle */
+table {
+    width: 100%;                          /* Tabelle nutzt gesamte verfügbare Breite */
+    border-collapse: collapse;            /* Kein doppelter Rahmen zwischen Zellen */
+    margin-top: 1rem;                     /* Abstand zur Überschrift */
+    font-size: 0.9rem;                    /* Etwas kleinere, aber gut lesbare Schrift */
+}
+
+/* Tabellenkopf (Spaltenüberschriften) */
+th {
+    background-color: #f8f9fa;            /* Helles Grau für Kopfzeile */
+    text-align: left;                     /* Text linksbündig */
+    padding: 0.6rem;
+    white-space: nowrap;                 /* Keine Zeilenumbrüche im Header */
+}
+
+/* Tabellenzellen */
+td {
+    border: 1px solid #ccc;               /* Dünner grauer Rahmen */
+    padding: 0.5rem;
+    vertical-align: top;                  /* Inhalte oben ausrichten */
+}
+
+/* Eingabefelder in Tabellenzellen */
+td input[type="text"],
+td input[type="number"],
+td select,
+td textarea {
+    width: 100%;                          /* Feld nimmt gesamte Zellenbreite ein */
+    padding: 4px;
+    font-size: 0.9rem;
+    box-sizing: border-box;              /* Padding wird mit in Breite einberechnet */
+    border: 1px solid #aaa;
+    border-radius: 4px;
+}
+
+/* Textbereiche (für Bemerkung) */
+textarea {
+    resize: vertical;                    /* Nur vertikal skalierbar */
+    min-height: 2rem;                    /* Anfangshöhe */
+}
+
+/* Alternative Zeilenfarben zur besseren Lesbarkeit */
+tr:nth-child(even) {
+    background-color: #f3f3f3;
+}
+
+/* Zeilenhervorhebung bei Mausbewegung */
+tr:hover {
+    background-color: #eef;
+}
+
+/* Speichern-Button */
+button {
+    margin-top: 1rem;
+    background-color: #007acc;           /* Blau (Microsoft-like) */
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* Button Hover-Effekt */
+button:hover {
+    background-color: #005fa3;
+}
