@@ -13,29 +13,8 @@ $lehrkraefte = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>Lehrkräfte bearbeiten - Test</title>
-    <!--<link rel="stylesheet" href="../css/lehrkraefte.css">-->
+    <link rel="stylesheet" href="../css/lehrkraefte.css">
 
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 6px;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        input[type="text"],
-        input[type="number"],
-        textarea,
-        select {
-            width: 100%;
-            box-sizing: border-box;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
