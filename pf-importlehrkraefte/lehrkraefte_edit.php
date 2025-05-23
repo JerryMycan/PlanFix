@@ -13,7 +13,7 @@ $lehrkraefte = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>Lehrkräfte bearbeiten - Test</title>
-    <link rel="stylesheet" href="../css/lehrkraefte.css">
+    <link rel="stylesheet" href="css/lehrkraefte.css">
 
 </head>
 <body>
