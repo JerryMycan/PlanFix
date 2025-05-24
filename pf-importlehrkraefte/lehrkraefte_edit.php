@@ -3,7 +3,12 @@
 // Lehrkräfte bearbeiten – Eingabeformular (sortiert nach Kürzel)
 // ============================================================
 
-require_once 'includes/db_connection.php';
+// Dynamischer Pfad zur db_connection.php je nach Umgebung
+$basePath = (strpos(gethostname(), 'geekom') !== false)
+    ? '/var/www/html/help/' // lokale Umgebung zu Hause
+    : '/var/www/planfix.kleist-schule.de/web/'; // Server
+
+require_once $basePath . 'includes/db_connection.php';
 
 // Lehrkräfte abrufen, alphabetisch nach Kürzel sortiert
 $sql = "SELECT * FROM lehrkraefte ORDER BY kuerzel ASC";
