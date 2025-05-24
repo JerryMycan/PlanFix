@@ -11,4 +11,4 @@ pf-importlehrkraefte/composer.lock
 .DS_Store
 
 # Zugangsdaten nie committen
-pf-importlehrkraefte/includes/db_config.php
+# pf-importlehrkraefte/includes/db_config.php
