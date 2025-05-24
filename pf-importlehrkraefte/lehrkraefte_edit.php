@@ -1,9 +1,12 @@
 <?php
-// Datenbankverbindung einbinden
+// ============================================================
+// Lehrkräfte bearbeiten – Eingabeformular (sortiert nach Kürzel)
+// ============================================================
+
 require_once 'includes/db_connection.php';
 
-// Alle Lehrkräfte aus der Datenbank laden
-$sql = "SELECT * FROM lehrkraefte ORDER BY nachname, vorname";
+// Lehrkräfte abrufen, alphabetisch nach Kürzel sortiert
+$sql = "SELECT * FROM lehrkraefte ORDER BY kuerzel ASC";
 $stmt = $pdo->query($sql);
 $lehrkraefte = $stmt->fetchAll();
 ?>
@@ -12,20 +15,19 @@ $lehrkraefte = $stmt->fetchAll();
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Lehrkräfte bearbeiten - Test</title>
+    <title>Lehrkräfte bearbeiten</title>
     <link rel="stylesheet" href="css/lehrkraefte.css">
-
 </head>
 <body>
     <div class="container">
         <h1>Lehrkräfte bearbeiten</h1>
 
-        <!-- Formular für alle Zeilen -->
+        <!-- Formular für alle Lehrkräfte -->
         <form method="post" action="logic/update_lehrkraefte.php">
             <table>
                 <thead>
                     <tr>
-                        <th>Kürzel</th>
+                        <th># / Kürzel / ID</th>
                         <th>Vorname</th>
                         <th>Nachname</th>
                         <th>Lehrbefähigung</th>
@@ -43,7 +45,7 @@ $lehrkraefte = $stmt->fetchAll();
                 <?php foreach ($lehrkraefte as $i => $lk): ?>
                     <tr>
                         <td>
-                            <?= htmlspecialchars($lk['kuerzel']) ?>
+                            <?= ($i + 1) ?>. <?= htmlspecialchars($lk['kuerzel']) ?> <!--(ID: <?= $lk['id'] ?>)-->
                             <input type="hidden" name="data[<?= $i ?>][kuerzel]" value="<?= htmlspecialchars($lk['kuerzel']) ?>">
                         </td>
                         <td><input type="text" name="data[<?= $i ?>][vorname]" value="<?= htmlspecialchars($lk['vorname']) ?>"></td>
